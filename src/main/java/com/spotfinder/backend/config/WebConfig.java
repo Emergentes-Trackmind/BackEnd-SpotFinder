@@ -13,7 +13,7 @@ public class WebConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/api/v1/**")
+                registry.addMapping("/api/**")
                         .allowedOrigins(
                                 "http://localhost:4200",                          // frontend en desarrollo
                                 "https://brave-mushroom-0031ada10.3.azurestaticapps.net" // frontend desplegado
