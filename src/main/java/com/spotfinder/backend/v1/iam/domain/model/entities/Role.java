@@ -1,8 +1,5 @@
 package com.spotfinder.backend.v1.iam.domain.model.entities;
 
-
-
-
 import com.spotfinder.backend.v1.iam.domain.model.valueobjects.Roles;
 import jakarta.persistence.*;
 import lombok.*;
@@ -26,6 +23,16 @@ public class Role {
 
     public Role(Roles name) {
         this.name = name;
+    }
+
+    // Explicit getId() method to ensure it's available
+    public Long getId() {
+        return Id;
+    }
+
+    // Explicit getter method to ensure it's available
+    public Roles getName() {
+        return name;
     }
 
     /**
@@ -67,5 +74,4 @@ public class Role {
         }
         return roles;
     }
-
 }

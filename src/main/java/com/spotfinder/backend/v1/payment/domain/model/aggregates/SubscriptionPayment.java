@@ -22,6 +22,19 @@ public class SubscriptionPayment extends Payment {
         this.subscriptionId = subscriptionId;
     }
 
+    // Explicit getter methods to ensure they're available
+    public Long getSubscriptionId() {
+        return subscriptionId;
+    }
+
+    public double getAmount() {
+        return super.getAmount();
+    }
+
+    public java.time.LocalDateTime getPaidAt() {
+        return super.getPaidAt();
+    }
+
     @Override
     public boolean isForSubscription() {
         return true;

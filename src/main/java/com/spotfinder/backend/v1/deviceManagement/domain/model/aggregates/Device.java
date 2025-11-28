@@ -8,8 +8,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -27,15 +25,11 @@ public class Device extends AuditableAbstractAggregateRoot<Device> {
     @Enumerated(EnumType.STRING)
     private SpotStatus spotStatus;
 
-    @Getter
     private String spotLabel;
 
     @Embedded
     private EdgeServerId edgeServerId;
 
-    @Getter
-    @Setter
-    /*@Column(unique = true)*/
     private String macAddress;
 
     @Enumerated(EnumType.STRING)
@@ -44,7 +38,6 @@ public class Device extends AuditableAbstractAggregateRoot<Device> {
     @Enumerated(EnumType.STRING)
     private DeviceStatus operationalStatus;
 
-    @Setter
     private LocalDateTime lastCommunication;
 
     protected Device() {}
@@ -61,17 +54,6 @@ public class Device extends AuditableAbstractAggregateRoot<Device> {
         this.lastCommunication = LocalDateTime.now();
     }
 
-    /*
-    public Device(CreateDeviceCommand command) {
-        this.macAddress = command.macAddress();
-        this.type = command.type();
-        this.operationalStatus = DeviceStatus.ONLINE;
-        this.spotStatus = SpotStatus.AVAILABLE;
-        this.lastCommunication = LocalDateTime.now();
-        this.parkingSpotId = new ParkingSpotId(command.parkingSpotId());
-        this.edgeServerId = new EdgeServerId(command.edgeServerId());
-    }*/
-
     public void updateMissingFields(UpdateDeviceCommand command) {
         this.edgeServerId = new EdgeServerId(command.edgeServerId());
         this.macAddress = command.macAddress();
@@ -80,7 +62,26 @@ public class Device extends AuditableAbstractAggregateRoot<Device> {
         this.lastCommunication = LocalDateTime.now();
     }
 
-    public Long getParkingId() { return parkingId.parkingId(); }
+    // Explicit getter methods
+    public String getMacAddress() {
+        return macAddress;
+    }
+
+    public String getSpotLabel() {
+        return spotLabel;
+    }
+
+    public void setMacAddress(String macAddress) {
+        this.macAddress = macAddress;
+    }
+
+    public void setLastCommunication(LocalDateTime lastCommunication) {
+        this.lastCommunication = lastCommunication;
+    }
+
+    public Long getParkingId() {
+        return parkingId.parkingId();
+    }
 
     public String getType() {
         return type.name();

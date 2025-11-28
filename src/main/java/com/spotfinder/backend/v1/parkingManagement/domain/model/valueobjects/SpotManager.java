@@ -23,6 +23,11 @@ public class SpotManager {
         this.parkingSpots = new ArrayList<>();
     }
 
+    // Explicit getter method to ensure it's available
+    public List<ParkingSpot> getParkingSpots() {
+        return parkingSpots;
+    }
+
     public ParkingSpot addParkingSpot(Parking parking, Integer row, Integer column, String label) {
         ParkingSpot parkingSpot = new ParkingSpot(parking, row, column, label);
         this.parkingSpots.add(parkingSpot);

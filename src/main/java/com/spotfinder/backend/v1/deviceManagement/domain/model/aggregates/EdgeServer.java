@@ -17,11 +17,13 @@ import java.time.LocalDateTime;
 @Entity
 public class EdgeServer extends AuditableAbstractAggregateRoot<EdgeServer> {
 
+    // Explicit getter methods to ensure they're available
     @Getter
     @NotNull
     private String serverId;
 
     @Getter
+
     @NotNull
     private String apiKey;
 
@@ -83,6 +85,34 @@ public class EdgeServer extends AuditableAbstractAggregateRoot<EdgeServer> {
         return this.parkingId.parkingId();
     }
 
+    public EdgeServerStatus getStatus() {
+        return status;
+    }
+
+    // Métodos getter explícitos para asegurar que estén disponibles
+    public String getServerId() {
+        return serverId;
+    }
+
+    public String getApiKey() {
+        return apiKey;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getMacAddress() {
+        return macAddress;
+    }
+
+    public Integer getConnectedDevicesCount() {
+        return connectedDevicesCount;
+    }
+
+    public void setMacAddress(String macAddress) {
+        this.macAddress = macAddress;
+    }
 
     private String generateServerId(Long parkingId) {
         var timestamp = LocalDateTime.now();
@@ -102,4 +132,5 @@ public class EdgeServer extends AuditableAbstractAggregateRoot<EdgeServer> {
     private String generateName() {
         return "EdgeServer-" + this.parkingId.parkingId();
     }
+
 }

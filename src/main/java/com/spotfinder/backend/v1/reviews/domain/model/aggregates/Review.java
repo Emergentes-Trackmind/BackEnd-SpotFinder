@@ -29,6 +29,16 @@ public class Review extends AuditableAbstractAggregateRoot<Review> {
     @Getter
     private Float rating;
 
+    // Missing field declarations
+    private Boolean responded = false;
+    private String responseText;
+    private java.util.Date responseAt;
+    private java.util.Date readAt;
+    private Boolean archived = false;
+    private java.util.Date archivedAt;
+    private String userEmail;
+    private String userAvatar;
+
     protected Review() {}
 
     public Review(CreateReviewCommand command, String driverName, String parkingName) {
@@ -38,6 +48,41 @@ public class Review extends AuditableAbstractAggregateRoot<Review> {
         this.parkingName = parkingName;
         this.comment = command.comment();
         this.rating = command.rating();
+        this.responded = false;
+        this.archived = false;
+    }
+
+    // Explicit getter methods to ensure they're available
+    public String getDriverName() {
+        return driverName;
+    }
+
+    public String getParkingName() {
+        return parkingName;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public Float getRating() {
+        return rating;
+    }
+
+    public String getResponseText() {
+        return responseText;
+    }
+
+    public java.util.Date getResponseAt() {
+        return responseAt;
+    }
+
+    public java.util.Date getReadAt() {
+        return readAt;
+    }
+
+    public java.util.Date getArchivedAt() {
+        return archivedAt;
     }
 
     public Long getDriverId() {

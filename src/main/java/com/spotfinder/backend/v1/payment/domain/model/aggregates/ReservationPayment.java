@@ -8,10 +8,10 @@ import jakarta.persistence.Entity;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+@Getter
 @Entity
 @DiscriminatorValue("RESERVATION")
 @NoArgsConstructor
-@Getter
 public class ReservationPayment extends Payment {
 
     @Column(name = "reservation_id")
@@ -20,6 +20,11 @@ public class ReservationPayment extends Payment {
     public ReservationPayment(CreatePaymentCommand command, Long reservationId) {
         super(command);
         this.reservationId = reservationId;
+    }
+
+    // Explicit getter to ensure availability at compile time
+    public Long getReservationId() {
+        return reservationId;
     }
 
     @Override

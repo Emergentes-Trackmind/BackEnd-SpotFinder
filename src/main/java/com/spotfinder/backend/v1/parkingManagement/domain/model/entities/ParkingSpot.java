@@ -50,6 +50,25 @@ public class ParkingSpot extends AuditableModel {
         this.status = ParkingSpotStatus.AVAILABLE;
     }
 
+    // Explicit getId() method to ensure it's available
+    public UUID getId() {
+        return id;
+    }
+
+    // Explicit getLabel() method to ensure it's available
+    public String getLabel() {
+        return label;
+    }
+
+    // Additional missing getter methods
+    public Integer getRowIndex() {
+        return rowIndex;
+    }
+
+    public Integer getColumnIndex() {
+        return columnIndex;
+    }
+
     public Long getParkingId() {
         return this.parking.getId();
     }

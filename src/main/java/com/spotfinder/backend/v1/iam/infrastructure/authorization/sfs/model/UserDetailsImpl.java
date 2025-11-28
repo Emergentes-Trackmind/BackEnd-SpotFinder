@@ -40,6 +40,24 @@ public class UserDetailsImpl implements UserDetails {
         this.enabled = true;
     }
 
+    // Explicit getUsername() method required by UserDetails interface
+    @Override
+    public String getUsername() {
+        return username;
+    }
+
+    // Explicit getPassword() method required by UserDetails interface
+    @Override
+    public String getPassword() {
+        return password;
+    }
+
+    // Explicit getAuthorities() method required by UserDetails interface
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return authorities;
+    }
+
     /**
      * This method is responsible for building the UserDetailsImpl object from the User object.
      * @param user The user object.

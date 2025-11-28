@@ -49,7 +49,24 @@ public class Driver extends AuditableAbstractAggregateRoot<Driver> {
         this.userId = userId;
     }
 
-    public Driver() {}
+    // Explicit getter methods to ensure they're available
+    public String getFullName() {
+        return fullName;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    protected Driver() {}
 
     public String getDni() {
         return dni.dni();

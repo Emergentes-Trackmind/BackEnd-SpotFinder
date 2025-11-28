@@ -52,6 +52,27 @@ public class ParkingOwner extends AuditableAbstractAggregateRoot<ParkingOwner> {
 
     public ParkingOwner() {}
 
+    // Explicit getter methods to ensure they're available
+    public String getFullName() {
+        return fullName;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public String getCompanyName() {
+        return companyName;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
     public String getPhone(){
         return phone.phone();
     }

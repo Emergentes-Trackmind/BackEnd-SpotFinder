@@ -106,4 +106,33 @@ public class Reservation extends AuditableAbstractAggregateRoot<Reservation> {
         if (status == ReservationStatus.CANCELED) return "CANCELLED";
         return status.name();
     }
+
+    // Explicit getter methods to ensure they're available even if Lombok fails
+    public String getDriverName() {
+        return driverName;
+    }
+
+    public String getVehiclePlate() {
+        return vehiclePlate;
+    }
+
+    public String getSpotLabel() {
+        return spotLabel;
+    }
+
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public LocalTime getStartTime() {
+        return startTime;
+    }
+
+    public LocalTime getEndTime() {
+        return endTime;
+    }
+
+    public Float getTotalPrice() {
+        return totalPrice;
+    }
 }

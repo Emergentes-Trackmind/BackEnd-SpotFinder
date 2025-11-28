@@ -7,8 +7,8 @@ import com.spotfinder.backend.v1.payment.interfaces.rest.resources.PaymentResour
 
 public class PaymentResourceFromEntityAssembler {
     public static PaymentResource toResourceFromEntity(Payment payment) {
-        return switch (payment) {
-            case ReservationPayment reservationPayment -> new PaymentResource(
+        if (payment instanceof ReservationPayment reservationPayment) {
+            return new PaymentResource(
                     "ReservationPayment",
                     reservationPayment.getId(),
                     reservationPayment.getAmount(),
@@ -16,7 +16,8 @@ public class PaymentResourceFromEntityAssembler {
                     reservationPayment.getReservationId(),
                     null
             );
-            case SubscriptionPayment subscriptionPayment -> new PaymentResource(
+        } else if (payment instanceof SubscriptionPayment subscriptionPayment) {
+            return new PaymentResource(
                     "SubscriptionPayment",
                     subscriptionPayment.getId(),
                     subscriptionPayment.getAmount(),
@@ -24,7 +25,7 @@ public class PaymentResourceFromEntityAssembler {
                     null,
                     subscriptionPayment.getSubscriptionId()
             );
-            default -> null;
-        };
+        }
+        return null;
     }
 }

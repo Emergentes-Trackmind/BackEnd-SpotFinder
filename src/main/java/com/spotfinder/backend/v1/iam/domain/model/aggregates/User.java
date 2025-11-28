@@ -31,7 +31,6 @@ public class User extends AuditableAbstractAggregateRoot<User> {
     @JoinTable(name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))
-
     private Set<Role> roles;
 
     public User() {
@@ -49,6 +48,23 @@ public class User extends AuditableAbstractAggregateRoot<User> {
         addRoles(roles);
     }
 
+    // Explicit getter methods to ensure they're available
+    public String getEmail() {
+        return email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public Set<Role> getRoles() {
+        return roles;
+    }
+
+    // Explicit setter method for password
+    public void setPassword(String password) {
+        this.password = password;
+    }
 
     public User addRole(Role role) {
         this.roles.add(role);
@@ -62,8 +78,6 @@ public class User extends AuditableAbstractAggregateRoot<User> {
     }
 
     public List<String> getSerializedRoles() {
-        return this.roles.stream().map(role -> role.getName().name()).toList();
+        return this.roles.stream().map(role -> role.getName().name()).collect(java.util.stream.Collectors.toList());
     }
-
-
 }

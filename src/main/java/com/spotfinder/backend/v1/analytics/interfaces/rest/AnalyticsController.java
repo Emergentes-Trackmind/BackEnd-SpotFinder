@@ -21,12 +21,16 @@ import java.util.List;
 @RestController
 @RequestMapping(value = {"/api/analytics", "/api/v1/analytics"})
 @SecurityRequirement(name = "bearerAuth")
-@RequiredArgsConstructor
 @Tag(name = "Analytics", description = "Analytics endpoints for dashboard KPIs and charts")
 public class AnalyticsController {
 
     private final AnalyticsQueryService analyticsService;
     private final java.util.concurrent.ConcurrentHashMap<String, Object> cache = new java.util.concurrent.ConcurrentHashMap<>();
+
+    // Explicit constructor to fix compilation issue
+    public AnalyticsController(AnalyticsQueryService analyticsService) {
+        this.analyticsService = analyticsService;
+    }
 
     private String userCacheKey(String base) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();

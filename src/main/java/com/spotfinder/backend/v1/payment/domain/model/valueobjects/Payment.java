@@ -45,4 +45,17 @@ public abstract class Payment extends AuditableAbstractAggregateRoot<Payment> {
 
     public abstract boolean isForSubscription();
     public abstract boolean isForReservation();
+
+    // Explicit getters to ensure availability at compile time (in case Lombok isn't applied by the build).
+    public Long getUserId() {
+        return userId;
+    }
+
+    public double getAmount() {
+        return amount;
+    }
+
+    public LocalDateTime getPaidAt() {
+        return paidAt;
+    }
 }

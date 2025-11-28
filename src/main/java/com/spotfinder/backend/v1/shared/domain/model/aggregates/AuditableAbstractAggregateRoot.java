@@ -27,4 +27,16 @@ public class AuditableAbstractAggregateRoot<T extends AbstractAggregateRoot<T>>
     @Column(nullable = false)
     private Date updatedAt;
 
+    // Explicit getters to ensure they're available even if Lombok fails
+    public Long getId() {
+        return id;
+    }
+
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public Date getUpdatedAt() {
+        return updatedAt;
+    }
 }

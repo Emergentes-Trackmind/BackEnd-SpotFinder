@@ -159,4 +159,135 @@ public class Parking extends AuditableAbstractAggregateRoot<Parking> {
         return this.ownerId.getValue();
     }
 
+    // Explicit getter methods to ensure they're available
+    public String getName() {
+        return name;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getWebsite() {
+        return website;
+    }
+
+    public Float getRatePerHour() {
+        return ratePerHour;
+    }
+
+    public Float getRating() {
+        return rating;
+    }
+
+    public Integer getTotalSpots() {
+        return totalSpots;
+    }
+
+    public Integer getAvailableSpots() {
+        return availableSpots;
+    }
+
+    public Float getAverageRating() {
+        return averageRating;
+    }
+
+    // Additional missing getter methods
+    public String getDescription() {
+        return description;
+    }
+
+    public Double getLat() {
+        return lat;
+    }
+
+    public Double getLng() {
+        return lng;
+    }
+
+    public Float getRatingCount() {
+        return ratingCount;
+    }
+
+    public Integer getTotalRows() {
+        return totalRows;
+    }
+
+    public Integer getTotalColumns() {
+        return totalColumns;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    // Missing setter methods
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setWebsite(String website) {
+        this.website = website;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public void setLat(Double lat) {
+        this.lat = lat;
+    }
+
+    public void setLng(Double lng) {
+        this.lng = lng;
+    }
+
+    public void setTotalSpots(Integer totalSpots) {
+        this.totalSpots = totalSpots;
+    }
+
+    public void setAvailableSpots(Integer availableSpots) {
+        this.availableSpots = availableSpots;
+    }
+
+    public void setRatePerHour(Float ratePerHour) {
+        this.ratePerHour = ratePerHour;
+    }
+
 }
