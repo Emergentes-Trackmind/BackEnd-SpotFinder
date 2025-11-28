@@ -39,6 +39,10 @@ import java.util.*;
  */
 @RestController
 @RequestMapping(value = {"/api/v1/authentication", "/api/auth"}, produces = MediaType.APPLICATION_JSON_VALUE)
+@CrossOrigin(origins = {
+    "http://localhost:4200",
+    "https://brave-mushroom-0031ada10.3.azurestaticapps.net"
+}, allowCredentials = "true")
 @Tag(name = "Authentication", description = "Authentication Endpoints")
 public class AuthenticationController {
     private final UserCommandService userCommandService;

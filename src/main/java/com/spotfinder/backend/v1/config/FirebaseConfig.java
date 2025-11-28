@@ -18,7 +18,8 @@ public class FirebaseConfig {
             String firebaseConfigBase64 = System.getenv("FIREBASE_ADMIN_CONFIG");
 
             if (firebaseConfigBase64 == null || firebaseConfigBase64.isEmpty()) {
-                throw new IllegalStateException("Variable de entorno FIREBASE_ADMIN_CONFIG no está definida.");
+                System.out.println("Variable de entorno FIREBASE_ADMIN_CONFIG no está definida. Firebase no será inicializado.");
+                return; // No inicializar Firebase si no hay configuración
             }
 
             byte[] decodedBytes = Base64.getDecoder().decode(firebaseConfigBase64);

@@ -84,11 +84,15 @@ public class WebSecurityConfiguration {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.cors(configurer -> configurer.configurationSource(request  -> {
             var cors = new CorsConfiguration();
-            cors.setAllowedOrigins(List.of("http://localhost:4200"));
+            cors.setAllowedOrigins(List.of(
+                "http://localhost:4200",
+                "https://brave-mushroom-0031ada10.3.azurestaticapps.net"
+            ));
             cors.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
             cors.setAllowedHeaders(List.of("*"));
             cors.setAllowCredentials(true);
             cors.setExposedHeaders(List.of("Authorization"));
+            cors.setMaxAge(3600L);
             return cors;
         }));
         http.csrf(csrfConfigurer -> csrfConfigurer.disable())
@@ -99,6 +103,8 @@ public class WebSecurityConfiguration {
                                 "/api/v1/authentication/**",
                                 "/api/v1/roles/**",
                                 "/api/auth/**",
+                                "/api/health/**",
+                                "/actuator/health/**",
                                 "/v3/api-docs/**",
                                 "/v3/api-docs.yaml",
                                 "/swagger-ui.html",
