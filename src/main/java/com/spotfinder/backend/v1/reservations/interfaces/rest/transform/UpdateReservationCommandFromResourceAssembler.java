@@ -4,6 +4,9 @@ import com.spotfinder.backend.v1.reservations.domain.model.commands.UpdateReserv
 
 public class UpdateReservationCommandFromResourceAssembler {
     public static UpdateReservationStatusCommand toCommandFromResource(Long reservationId, String status) {
-        return new UpdateReservationStatusCommand(reservationId, status);
+        String normalized = status != null ? status.trim().toUpperCase() : "";
+        if ("CANCELLED".equals(normalized)) normalized = "CANCELED"; // frontend usa CANCELLED
+        if ("PAID".equals(normalized)) normalized = "CONFIRMED"; // map to existing state
+        return new UpdateReservationStatusCommand(reservationId, normalized);
     }
 }

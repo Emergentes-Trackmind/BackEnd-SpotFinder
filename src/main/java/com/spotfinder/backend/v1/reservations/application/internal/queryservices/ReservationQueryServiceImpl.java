@@ -4,6 +4,7 @@ import com.spotfinder.backend.v1.reservations.domain.model.aggregates.Reservatio
 import com.spotfinder.backend.v1.reservations.domain.model.queries.GetAllReservationsByDriverIdAndStatusQuery;
 import com.spotfinder.backend.v1.reservations.domain.model.queries.GetAllReservationsByDriverIdQuery;
 import com.spotfinder.backend.v1.reservations.domain.model.queries.GetAllReservationsByParkingIdQuery;
+import com.spotfinder.backend.v1.reservations.domain.model.queries.GetAllReservationsQuery;
 import com.spotfinder.backend.v1.reservations.domain.model.valueobjects.ReservationStatus;
 import com.spotfinder.backend.v1.reservations.domain.services.ReservationQueryService;
 import com.spotfinder.backend.v1.reservations.infrastructure.persistence.jpa.repositories.ReservationRepository;
@@ -33,5 +34,10 @@ public class ReservationQueryServiceImpl implements ReservationQueryService {
     public List<Reservation> handle(GetAllReservationsByDriverIdAndStatusQuery query) {
         var reservationStatus = ReservationStatus.valueOf(query.status());
         return reservationRepository.findReservationsByDriverIdDriverIdAndStatus(query.driverId(), reservationStatus);
+    }
+
+    @Override
+    public List<Reservation> handle(GetAllReservationsQuery query) {
+        return reservationRepository.findAll();
     }
 }

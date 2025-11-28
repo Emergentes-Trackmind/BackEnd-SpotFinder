@@ -73,7 +73,9 @@ public class Reservation extends AuditableAbstractAggregateRoot<Reservation> {
     }
 
     public void updateStatus(String newStatus) {
-        this.status = ReservationStatus.valueOf(newStatus.toUpperCase());
+        String normalized = newStatus != null ? newStatus.toUpperCase() : "";
+        if ("CANCELLED".equals(normalized)) normalized = "CANCELED";
+        this.status = ReservationStatus.valueOf(normalized);
     }
 
     public void confirm() {
@@ -101,6 +103,7 @@ public class Reservation extends AuditableAbstractAggregateRoot<Reservation> {
     }
 
     public String getStatus() {
+        if (status == ReservationStatus.CANCELED) return "CANCELLED";
         return status.name();
     }
 }

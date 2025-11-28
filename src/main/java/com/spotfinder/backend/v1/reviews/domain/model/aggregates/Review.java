@@ -47,4 +47,35 @@ public class Review extends AuditableAbstractAggregateRoot<Review> {
     public Long getParkingId() {
         return parkingId.parkingId();
     }
+
+    public Boolean getResponded() {
+        return responded;
+    }
+
+    public Boolean getArchived() {
+        return archived;
+    }
+
+    public String getUserEmail() {
+        return userEmail;
+    }
+
+    public String getUserAvatar() {
+        return userAvatar;
+    }
+
+    public void respondWithText(String text) {
+        this.responded = true;
+        this.responseText = text;
+        this.responseAt = new java.util.Date();
+    }
+
+    public void markRead() {
+        this.readAt = new java.util.Date();
+    }
+
+    public void archiveNow() {
+        this.archived = true;
+        this.archivedAt = new java.util.Date();
+    }
 }
