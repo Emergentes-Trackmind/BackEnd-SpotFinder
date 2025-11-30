@@ -1,10 +1,12 @@
 package com.spotfinder.backend.v1.compat.interfaces.rest;
 
+import com.spotfinder.backend.v1.iam.infrastructure.tokens.jwt.BearerTokenService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,6 +16,12 @@ import java.util.concurrent.ConcurrentHashMap;
 @CrossOrigin
 @Tag(name = "Compat IoT Devices")
 public class CompatDevicesController {
+
+    private final BearerTokenService tokenService;
+
+    public CompatDevicesController(BearerTokenService tokenService) {
+        this.tokenService = tokenService;
+    }
 
     public record DeviceJson(String id, String parkingId, String serialNumber, String model,
                              String type, String status, Integer battery, String parkingSpotId,
@@ -151,6 +159,71 @@ public class CompatDevicesController {
         var updated = new DeviceJson(d.id(), d.parkingId(), d.serialNumber(), d.model(), d.type(), status, battery, d.parkingSpotId(), d.createdAt(), nowIso(), d.parkingName(), d.parkingSpotLabel(), d.deviceToken(), d.mqttTopic(), d.webhookEndpoint());
         STORE.put(id, updated);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{serial}/bind")
+    public ResponseEntity<?> bindDevice(@PathVariable String serial,
+                                        @RequestBody Map<String, Object> body,
+                                        @RequestHeader(value = "Authorization", required = false) String authHeader,
+                                        HttpServletRequest request) {
+        var id = SERIAL_INDEX.get(serial);
+        if (id == null) return ResponseEntity.notFound().build();
+
+        // Autenticación obligatoria vía JWT
+        try {
+            String bearer = tokenService.getBearerTokenFrom(request);
+            if (bearer == null && authHeader != null && authHeader.startsWith("Bearer ")) {
+                bearer = authHeader.substring("Bearer ".length());
+            }
+            if (bearer == null || bearer.isBlank()) {
+                return ResponseEntity.status(401).body(Map.of(
+                        "error", "Unauthorized",
+                        "message", "Se requiere token JWT"
+                ));
+            }
+            String userId = tokenService.getUserIdFromToken(bearer);
+            if (userId == null || userId.isBlank()) {
+                return ResponseEntity.status(401).body(Map.of(
+                        "error", "Unauthorized",
+                        "message", "Token JWT inválido"
+                ));
+            }
+
+        String parkingId = String.valueOf(body.getOrDefault("parkingId", "0"));
+        String parkingSpotId = body.get("parkingSpotId") == null ? null : String.valueOf(body.get("parkingSpotId"));
+        String status = String.valueOf(body.getOrDefault("status", "online"));
+
+        var existing = STORE.get(id);
+        if (existing == null) return ResponseEntity.notFound().build();
+
+        var updated = new DeviceJson(
+                existing.id(),
+                parkingId,
+                existing.serialNumber(),
+                existing.model(),
+                existing.type(),
+                status,
+                existing.battery(),
+                parkingSpotId,
+                existing.createdAt(),
+                nowIso(),
+                existing.parkingName(),
+                parkingSpotId != null ? parkingSpotId : existing.parkingSpotLabel(),
+                existing.deviceToken(),
+                existing.mqttTopic(),
+                existing.webhookEndpoint()
+        );
+
+        STORE.put(id, updated);
+
+        // Respuesta simple para compatibilidad FE
+        return ResponseEntity.ok(updated);
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body(Map.of(
+                    "error", "Unauthorized",
+                    "message", "Error de autenticación: " + e.getMessage()
+            ));
+        }
     }
 
     @PostMapping("/bulk")
