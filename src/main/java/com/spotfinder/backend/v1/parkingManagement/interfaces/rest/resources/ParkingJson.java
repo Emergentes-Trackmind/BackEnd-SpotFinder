@@ -11,5 +11,8 @@ public record ParkingJson(
         String phone,
         String email,
         String website,
-        String status
+        String status,
+        java.util.Map<String, Object> location,
+        java.util.Map<String, Object> pricing,
+        java.util.Map<String, Object> features
 ) {}

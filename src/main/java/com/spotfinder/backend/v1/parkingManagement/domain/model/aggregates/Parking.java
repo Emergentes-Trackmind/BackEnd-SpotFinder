@@ -98,6 +98,21 @@ public class Parking extends AuditableAbstractAggregateRoot<Parking> {
     @NotNull
     private String imageUrl;
 
+    @Getter
+    @Setter
+    @jakarta.persistence.Lob
+    private String locationJson;
+
+    @Getter
+    @Setter
+    @jakarta.persistence.Lob
+    private String pricingJson;
+
+    @Getter
+    @Setter
+    @jakarta.persistence.Lob
+    private String featuresJson;
+
     @Embedded
     private SpotManager parkingSpotManager;
 

@@ -1,4 +1,4 @@
-package com.spotfinder.backend.v1.parkingManagement.interfaces.rest;
+﻿package com.spotfinder.backend.v1.parkingManagement.interfaces.rest;
 
 import com.spotfinder.backend.v1.parkingManagement.domain.model.aggregates.Parking;
 import com.spotfinder.backend.v1.parkingManagement.domain.model.entities.ParkingSpot;
@@ -17,6 +17,8 @@ import com.spotfinder.backend.v1.parkingManagement.interfaces.rest.transform.Add
 import com.spotfinder.backend.v1.parkingManagement.interfaces.rest.transform.CreateParkingCommandFromResourceAssembler;
 import com.spotfinder.backend.v1.parkingManagement.interfaces.rest.transform.ParkingResourceFromEntityAssembler;
 import com.spotfinder.backend.v1.parkingManagement.interfaces.rest.transform.ParkingSpotResourceFromEntityAssembler;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -28,6 +30,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Optional;
 import java.util.Map;
+import java.util.HashMap;
 
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
@@ -41,6 +44,7 @@ public class ParkingsController {
     private final ParkingQueryService parkingQueryService;
     private final com.spotfinder.backend.v1.parkingManagement.infrastructure.persistence.jpa.repositories.ParkingRepository parkingRepository;
     private final com.spotfinder.backend.v1.iam.infrastructure.tokens.jwt.BearerTokenService tokenService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public ParkingsController(ParkingCommandService parkingCommandService,
                               ParkingQueryService parkingQueryService,
@@ -70,8 +74,93 @@ public class ParkingsController {
                 phone,
                 email,
                 website,
-                status
+                status,
+                buildLocationMap(p),
+                buildPricingMap(p),
+                buildFeaturesMap(p)
         );
+    }
+
+    private Map<String, Object> buildLocationMap(Parking p) {
+        var fallback = new HashMap<String, Object>();
+        fallback.put("addressLine", p.getAddress() != null ? p.getAddress() : "");
+        fallback.put("city", "");
+        fallback.put("postalCode", "");
+        fallback.put("state", "");
+        fallback.put("country", "");
+        fallback.put("latitude", p.getLat() != null ? p.getLat() : 0.0);
+        fallback.put("longitude", p.getLng() != null ? p.getLng() : 0.0);
+        return safeParse(p.getLocationJson(), fallback);
+    }
+
+    private Map<String, Object> buildPricingMap(Parking p) {
+        var fallback = new HashMap<String, Object>();
+        double hourly = p.getRatePerHour() != null ? p.getRatePerHour() : 0.0;
+        fallback.put("hourlyRate", hourly);
+        fallback.put("dailyRate", hourly * 24);
+        fallback.put("monthlyRate", hourly * 24 * 30);
+        fallback.put("currency", "EUR");
+        fallback.put("minimumStay", "SinLimite");
+        fallback.put("open24h", true);
+        var hours = new HashMap<String, Object>();
+        hours.put("openTime", "08:00");
+        hours.put("closeTime", "22:00");
+        fallback.put("operatingHours", hours);
+        var days = new HashMap<String, Boolean>();
+        days.put("monday", true);
+        days.put("tuesday", true);
+        days.put("wednesday", true);
+        days.put("thursday", true);
+        days.put("friday", true);
+        days.put("saturday", true);
+        days.put("sunday", false);
+        fallback.put("operatingDays", days);
+        var promotions = new HashMap<String, Boolean>();
+        promotions.put("earlyBird", false);
+        promotions.put("weekend", false);
+        promotions.put("longStay", false);
+        fallback.put("promotions", promotions);
+        return safeParse(p.getPricingJson(), fallback);
+    }
+
+    private Map<String, Object> buildFeaturesMap(Parking p) {
+        var fallback = new HashMap<String, Object>();
+        fallback.put("security", defaultFlagMap());
+        fallback.put("amenities", defaultFlagMap());
+        fallback.put("services", defaultFlagMap());
+        var payments = defaultFlagMap();
+        payments.put("cardPayment", true);
+        fallback.put("payments", payments);
+        return safeParse(p.getFeaturesJson(), fallback);
+    }
+
+    private Map<String, Boolean> defaultFlagMap() {
+        var map = new HashMap<String, Boolean>();
+        map.put("security24h", false);
+        map.put("cameras", false);
+        map.put("lighting", false);
+        map.put("accessControl", false);
+        map.put("covered", false);
+        map.put("elevator", false);
+        map.put("bathrooms", false);
+        map.put("carWash", false);
+        map.put("electricCharging", false);
+        map.put("freeWifi", false);
+        map.put("valetService", false);
+        map.put("maintenance", false);
+        map.put("mobilePayment", false);
+        map.put("monthlyPasses", false);
+        map.put("corporateRates", false);
+        return map;
+    }
+
+    private Map<String, Object> safeParse(String json, Map<String, Object> fallback) {
+        if (json == null || json.isBlank()) return fallback;
+        try {
+            return objectMapper.readValue(json, new TypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            return fallback;
+        }
     }
 
     @Operation(summary = "Create a new parking (FE contract)")
@@ -95,12 +184,12 @@ public class ParkingsController {
             String sub = tokenService.getUserIdFromToken(bearer);
             if (sub == null) {
                 return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("error", "Token JWT inválido"));
+                        .body(Map.of("error", "Token JWT invÃ¡lido"));
             }
             ownerId = Long.valueOf(sub);
         } catch (Exception e) {
             return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "Error de autenticación: " + e.getMessage()));
+                    .body(Map.of("error", "Error de autenticaciÃ³n: " + e.getMessage()));
         }
 
         // 2) Validar campos requeridos
@@ -122,13 +211,13 @@ public class ParkingsController {
         Integer availableSpots = parseInt(body.get("accessibleSpaces"), 0);
         if (availableSpots > totalSpots) availableSpots = totalSpots;
 
-        // Ubicación y precio llegan luego por /locations y /pricing; usar defaults seguros
+        // UbicaciÃ³n y precio llegan luego por /locations y /pricing; usar defaults seguros
         String address = String.valueOf(body.getOrDefault("addressLine", ""));
         Double lat = parseDouble(body.get("latitude"), 0.0);
         Double lng = parseDouble(body.get("longitude"), 0.0);
         Float ratePerHour = parseFloat(body.get("hourlyRate"), 0.0f);
 
-        // Calcular una grilla mínima válida si no viene del FE
+        // Calcular una grilla mÃ­nima vÃ¡lida si no viene del FE
         int rows = Math.max(1, (int) Math.round(Math.sqrt(Math.max(1, totalSpots))));
         int cols = Math.max(1, (int) Math.ceil(totalSpots / (double) rows));
 
@@ -157,8 +246,18 @@ public class ParkingsController {
         Optional<Parking> parking = this.parkingCommandService
                 .handle(CreateParkingCommandFromResourceAssembler.toCommandFromResource(adjusted));
 
-        return parking.map(source ->
-                        new ResponseEntity<>(toParkingJson(source), CREATED))
+        return parking.map(source -> {
+                    try {
+                        var location = extractLocation(body, source);
+                        var pricing = extractPricing(body, source);
+                        var features = extractFeatures(body);
+                        source.setLocationJson(objectMapper.writeValueAsString(location));
+                        source.setPricingJson(objectMapper.writeValueAsString(pricing));
+                        source.setFeaturesJson(objectMapper.writeValueAsString(features));
+                        parkingRepository.save(source);
+                    } catch (Exception ignored) {}
+                    return new ResponseEntity<>(toParkingJson(source), CREATED);
+                })
                 .orElseGet(() -> ResponseEntity.badRequest().build());
     }
 
@@ -171,6 +270,69 @@ public class ParkingsController {
     }
     private static Float parseFloat(Object value, Float defaultValue) {
         try { return value == null ? defaultValue : Float.parseFloat(String.valueOf(value)); } catch (Exception e) { return defaultValue; }
+    }
+
+    private Map<String, Object> extractLocation(Map<String, Object> body, Parking p) {
+        var location = new HashMap<>(buildLocationMap(p));
+        if (body.containsKey("location") && body.get("location") instanceof Map<?, ?> loc) {
+            location.putAll((Map<String, Object>) loc);
+        }
+        if (body.containsKey("addressLine")) location.put("addressLine", String.valueOf(body.get("addressLine")));
+        if (body.containsKey("city")) location.put("city", String.valueOf(body.get("city")));
+        if (body.containsKey("postalCode")) location.put("postalCode", String.valueOf(body.get("postalCode")));
+        if (body.containsKey("state")) location.put("state", String.valueOf(body.get("state")));
+        if (body.containsKey("country")) location.put("country", String.valueOf(body.get("country")));
+        if (body.containsKey("latitude")) location.put("latitude", parseDouble(body.get("latitude"), 0.0));
+        if (body.containsKey("longitude")) location.put("longitude", parseDouble(body.get("longitude"), 0.0));
+        return location;
+    }
+
+    private Map<String, Object> extractPricing(Map<String, Object> body, Parking p) {
+        var pricing = new HashMap<>(buildPricingMap(p));
+        if (body.containsKey("pricing") && body.get("pricing") instanceof Map<?, ?> pr) {
+            pricing.putAll((Map<String, Object>) pr);
+        }
+        if (body.containsKey("hourlyRate")) pricing.put("hourlyRate", parseDouble(body.get("hourlyRate"), 0.0));
+        if (body.containsKey("dailyRate")) pricing.put("dailyRate", parseDouble(body.get("dailyRate"), 0.0));
+        if (body.containsKey("monthlyRate")) pricing.put("monthlyRate", parseDouble(body.get("monthlyRate"), 0.0));
+        if (body.containsKey("currency")) pricing.put("currency", String.valueOf(body.get("currency")));
+        if (body.containsKey("minimumStay")) pricing.put("minimumStay", String.valueOf(body.get("minimumStay")));
+        if (body.containsKey("open24h")) pricing.put("open24h", Boolean.parseBoolean(String.valueOf(body.get("open24h"))));
+        if (body.containsKey("operatingHours") && body.get("operatingHours") instanceof Map<?, ?> hours) {
+            pricing.put("operatingHours", new HashMap<>((Map<String, Object>) hours));
+        }
+        if (body.containsKey("operatingDays") && body.get("operatingDays") instanceof Map<?, ?> days) {
+            pricing.put("operatingDays", new HashMap<>((Map<String, Object>) days));
+        }
+        if (body.containsKey("promotions") && body.get("promotions") instanceof Map<?, ?> promos) {
+            pricing.put("promotions", new HashMap<>((Map<String, Object>) promos));
+        }
+        return pricing;
+    }
+
+    private Map<String, Object> extractFeatures(Map<String, Object> body) {
+        var features = new HashMap<>(buildFeaturesMap(new Parking()));
+        if (body.containsKey("features") && body.get("features") instanceof Map<?, ?> ft) {
+            mergeFeatures(features, (Map<String, Object>) ft);
+        }
+        return features;
+    }
+
+    private void mergeFeatures(Map<String, Object> base, Map<String, Object> incoming) {
+        incoming.forEach((key, value) -> {
+            if (value instanceof Map<?, ?> valueMap) {
+                var target = base.getOrDefault(key, new HashMap<String, Object>());
+                if (target instanceof Map<?, ?> tMap) {
+                    var copy = new HashMap<String, Object>((Map<String, Object>) tMap);
+                    copy.putAll((Map<String, Object>) valueMap);
+                    base.put(key, copy);
+                } else {
+                    base.put(key, new HashMap<>((Map<String, Object>) valueMap));
+                }
+            } else {
+                base.put(key, value);
+            }
+        });
     }
 
     @Operation(summary = "Add a parking spot")
@@ -249,6 +411,10 @@ public class ParkingsController {
         }
 
         try {
+            var currentLocation = extractLocation(body, p);
+            var currentPricing = extractPricing(body, p);
+            var currentFeatures = buildFeaturesMap(p);
+
             // Actualizar campos básicos con validación
             if (body.containsKey("name")) {
                 String name = String.valueOf(body.get("name")).trim();
@@ -302,9 +468,9 @@ public class ParkingsController {
                             .body(Map.of("error", "La tarifa por hora no puede ser negativa"));
                 }
                 p.setRatePerHour(rate);
+                currentPricing.put("hourlyRate", (double) rate);
             }
 
-            // Actualizar ubicación
             // Actualizar ubicación con validación
             if (body.containsKey("addressLine")) {
                 String address = String.valueOf(body.get("addressLine")).trim();
@@ -313,6 +479,7 @@ public class ParkingsController {
                             .body(Map.of("error", "La dirección no puede estar vacía"));
                 }
                 p.setAddress(address);
+                currentLocation.put("addressLine", address);
             }
             if (body.containsKey("latitude")) {
                 try {
@@ -322,6 +489,7 @@ public class ParkingsController {
                             .body(Map.of("error", "La latitud debe estar entre -90 y 90"));
                     }
                     p.setLat(lat);
+                    currentLocation.put("latitude", lat);
                 } catch (NumberFormatException e) {
                     return ResponseEntity.badRequest()
                             .body(Map.of("error", "Formato de latitud inválido"));
@@ -335,11 +503,27 @@ public class ParkingsController {
                             .body(Map.of("error", "La longitud debe estar entre -180 y 180"));
                     }
                     p.setLng(lng);
+                    currentLocation.put("longitude", lng);
                 } catch (NumberFormatException e) {
                     return ResponseEntity.badRequest()
                             .body(Map.of("error", "Formato de longitud inválido"));
                 }
             }
+
+            // Merge de objetos completos si llegan embebidos
+            if (body.containsKey("location") && body.get("location") instanceof Map<?, ?> locObj) {
+                currentLocation.putAll((Map<String, Object>) locObj);
+            }
+            if (body.containsKey("pricing") && body.get("pricing") instanceof Map<?, ?> pricingObj) {
+                currentPricing.putAll((Map<String, Object>) pricingObj);
+            }
+            if (body.containsKey("features") && body.get("features") instanceof Map<?, ?> featuresObj) {
+                mergeFeatures(currentFeatures, (Map<String, Object>) featuresObj);
+            }
+
+            p.setLocationJson(objectMapper.writeValueAsString(currentLocation));
+            p.setPricingJson(objectMapper.writeValueAsString(currentPricing));
+            p.setFeaturesJson(objectMapper.writeValueAsString(currentFeatures));
 
             parkingRepository.save(p);
             return ResponseEntity.ok(toParkingJson(p));
@@ -414,13 +598,13 @@ public class ParkingsController {
 
             var p = opt.get();
 
-            // Validación de campos obligatorios
+            // ValidaciÃ³n de campos obligatorios
             if (body.addressLine() == null || body.addressLine().trim().isEmpty()) {
                 return ResponseEntity.badRequest()
                     .body(null);
             }
 
-            // Validación de coordenadas
+            // ValidaciÃ³n de coordenadas
             if (body.latitude() < -90 || body.latitude() > 90 || body.longitude() < -180 || body.longitude() > 180) {
                 return ResponseEntity.badRequest()
                     .body(null);
@@ -583,7 +767,7 @@ public class ParkingsController {
 
             var p = opt.get();
             
-            // Validar y procesar las características
+            // Validar y procesar las caracterÃ­sticas
             if (body.security() == null || body.amenities() == null || 
                 body.services() == null || body.payments() == null) {
                 return ResponseEntity.badRequest().body(null);
@@ -616,7 +800,7 @@ public class ParkingsController {
 
             var p = opt.get();
 
-            // Validar y actualizar las características
+            // Validar y actualizar las caracterÃ­sticas
             if (body.security() == null || body.amenities() == null || 
                 body.services() == null || body.payments() == null) {
                 return ResponseEntity.badRequest().body(null);
@@ -638,4 +822,6 @@ public class ParkingsController {
         }
     }
     }
+
+
 
