@@ -1,4 +1,4 @@
-﻿package com.spotfinder.backend.v1.parkingManagement.interfaces.rest;
+package com.spotfinder.backend.v1.parkingManagement.interfaces.rest;
 
 import com.spotfinder.backend.v1.parkingManagement.domain.model.aggregates.Parking;
 import com.spotfinder.backend.v1.parkingManagement.domain.model.entities.ParkingSpot;
@@ -131,6 +131,7 @@ public class ParkingsController {
         var payments = defaultFlagMap();
         payments.put("cardPayment", true);
         fallback.put("payments", payments);
+        if (p == null) return fallback;
         return safeParse(p.getFeaturesJson(), fallback);
     }
 
@@ -311,7 +312,7 @@ public class ParkingsController {
     }
 
     private Map<String, Object> extractFeatures(Map<String, Object> body) {
-        var features = new HashMap<>(buildFeaturesMap(new Parking()));
+        var features = new HashMap<>(buildFeaturesMap(null));
         if (body.containsKey("features") && body.get("features") instanceof Map<?, ?> ft) {
             mergeFeatures(features, (Map<String, Object>) ft);
         }
