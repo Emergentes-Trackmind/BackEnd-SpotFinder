@@ -372,6 +372,105 @@ public class ParkingsController {
         return ResponseEntity.ok(parkingSpotResources);
     }
 
+    @Operation(summary = "Update parking spot status manually")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Spot status updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid status value or spot ID"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - JWT token missing or invalid"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Not the parking owner"),
+            @ApiResponse(responseCode = "404", description = "Parking or spot not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @PatchMapping("/parkings/{parkingId}/spots/{spotId}")
+    public ResponseEntity<?> updateParkingSpotStatus(@PathVariable Long parkingId,
+                                                      @PathVariable String spotId,
+                                                      @RequestBody Map<String, Object> body,
+                                                      HttpServletRequest request) {
+        try {
+            // 1) Validar y obtener owner desde JWT
+            String bearer = tokenService.getBearerTokenFrom(request);
+            if (bearer == null) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "Token de autenticación requerido"));
+            }
+            String sub = tokenService.getUserIdFromToken(bearer);
+            if (sub == null) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "Token JWT inválido"));
+            }
+            Long currentUserId = Long.valueOf(sub);
+
+            // 2) Verificar que el parking existe
+            var parkingOpt = parkingQueryService.handle(new GetParkingByIdQuery(parkingId));
+            if (parkingOpt.isEmpty()) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "Parking no encontrado"));
+            }
+
+            var parking = parkingOpt.get();
+
+            // 3) Verificar que el usuario es el propietario
+            if (!parking.getOwnerId().equals(currentUserId)) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", "No tienes permisos para modificar este parking"));
+            }
+
+            // 4) Validar que se proporciona el campo status
+            if (!body.containsKey("status")) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Se requiere el campo 'status'"));
+            }
+
+            String status = String.valueOf(body.get("status")).trim().toUpperCase();
+
+            // 5) Validar que el estado es válido
+            if (!status.equals("AVAILABLE") && !status.equals("OCCUPIED") && !status.equals("RESERVED")) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Estado inválido. Valores permitidos: AVAILABLE, OCCUPIED, RESERVED"));
+            }
+
+            // 6) Validar y parsear el UUID del spot
+            UUID spotUuid;
+            try {
+                spotUuid = UUID.fromString(spotId);
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "ID de spot inválido"));
+            }
+
+            // 7) Verificar que el spot existe en el parking
+            var spot = parking.getParkingSpot(spotUuid);
+            if (spot == null) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "Spot no encontrado"));
+            }
+
+            // 8) Actualizar el estado del spot
+            var command = new com.spotfinder.backend.v1.parkingManagement.domain.model.commands.UpdateParkingSpotAvailabilityCommand(
+                    parkingId, spotUuid, status
+            );
+            parkingCommandService.handle(command);
+
+            // 9) Retornar el spot actualizado
+            var updatedParkingOpt = parkingQueryService.handle(new GetParkingByIdQuery(parkingId));
+            if (updatedParkingOpt.isPresent()) {
+                var updatedSpot = updatedParkingOpt.get().getParkingSpot(spotUuid);
+                if (updatedSpot != null) {
+                    return ResponseEntity.ok(ParkingSpotResourceFromEntityAssembler.toResourceFromEntity(updatedSpot));
+                }
+            }
+
+            return ResponseEntity.ok(Map.of("message", "Estado actualizado correctamente"));
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error al actualizar el spot: " + e.getMessage()));
+        }
+    }
+
     @GetMapping("/parkings/{parkingId}")
     @Operation(summary = "Get parking by id (FE contract)")
     @ApiResponses(value = {
