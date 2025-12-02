@@ -400,7 +400,7 @@ public class ParkingsController {
             // Verificar que el parking exista y el usuario sea el propietario
             var parkingOpt = parkingQueryService.handle(new GetParkingByIdQuery(parkingId));
             if (parkingOpt.isEmpty()) {
-                return ResponseEntity.notFound()
+                return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
                         .body(Map.of("error", "Parking no encontrado"));
             }
 
@@ -423,7 +423,7 @@ public class ParkingsController {
             var spotOpt = parkingQueryService.handle(query);
 
             if (spotOpt.isEmpty()) {
-                return ResponseEntity.notFound()
+                return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
                         .body(Map.of("error", "Spot no encontrado"));
             }
 
