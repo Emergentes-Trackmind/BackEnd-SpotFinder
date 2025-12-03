@@ -5,7 +5,6 @@ import com.spotfinder.backend.v1.parkingManagement.interfaces.rest.resources.Upd
 
 public class UpdateSpotByTelemetryCommandFromResourceAssembler {
     public static UpdateSpotByTelemetryCommand toCommandFromResource(UpdateSpotByTelemetryResource resource) {
-        return new UpdateSpotByTelemetryCommand(resource.sensorSerialNumber(), resource.occupied());
+        return new UpdateSpotByTelemetryCommand(resource.serialNumber(), resource.occupied());
     }
 }
-

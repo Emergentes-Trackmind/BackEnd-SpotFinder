@@ -11,6 +11,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,6 +25,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RequestMapping(value = {"/api/spots", "/api/v1/spots"}, produces = APPLICATION_JSON_VALUE)
 @Tag(name = "Parking Spots", description = "Parking Spot IoT management")
 public class ParkingSpotsController {
+
+    private static final Logger logger = LoggerFactory.getLogger(ParkingSpotsController.class);
 
     private final ParkingCommandService parkingCommandService;
 
@@ -52,24 +56,33 @@ public class ParkingSpotsController {
         return new ResponseEntity<>(spotResource, OK);
     }
 
-    @Operation(summary = "Update parking spot status by telemetry data")
+    @Operation(summary = "Sync parking spot status by telemetry data from Edge Server")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Parking spot status updated successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid request"),
-            @ApiResponse(responseCode = "404", description = "Parking spot not found with the given sensor serial number")
+            @ApiResponse(responseCode = "200", description = "Telemetry data received and processed")
     })
-    @PostMapping("/telemetry")
-    public ResponseEntity<ParkingSpotResource> updateSpotByTelemetry(
+    @PostMapping("/sync-telemetry")
+    public ResponseEntity<Void> syncTelemetry(
             @RequestBody UpdateSpotByTelemetryResource resource) {
 
-        var command = UpdateSpotByTelemetryCommandFromResourceAssembler.toCommandFromResource(resource);
-        var parkingSpot = parkingCommandService.handle(command);
+        try {
+            var command = UpdateSpotByTelemetryCommandFromResourceAssembler.toCommandFromResource(resource);
+            var parkingSpot = parkingCommandService.handle(command);
 
-        if (parkingSpot.isEmpty()) {
-            return ResponseEntity.badRequest().build();
+            if (parkingSpot.isEmpty()) {
+                logger.warn("Telemetry sync: Parking spot not found for sensor serial number: {}",
+                           resource.serialNumber());
+            } else {
+                logger.info("Telemetry sync: Successfully updated spot {} with sensor {} to occupied: {}",
+                           parkingSpot.get().getId(),
+                           resource.serialNumber(),
+                           resource.occupied());
+            }
+        } catch (IllegalArgumentException e) {
+            logger.warn("Telemetry sync: Error processing telemetry data - {}", e.getMessage());
+        } catch (Exception e) {
+            logger.error("Telemetry sync: Unexpected error processing telemetry data", e);
         }
 
-        var spotResource = ParkingSpotResourceFromEntityAssembler.toResourceFromEntity(parkingSpot.get());
-        return new ResponseEntity<>(spotResource, OK);
+        return ResponseEntity.ok().build();
     }
 }
