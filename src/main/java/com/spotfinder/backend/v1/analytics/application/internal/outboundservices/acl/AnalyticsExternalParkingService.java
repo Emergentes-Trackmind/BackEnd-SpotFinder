@@ -1,5 +1,6 @@
 package com.spotfinder.backend.v1.analytics.application.internal.outboundservices.acl;
 
+import com.spotfinder.backend.v1.iam.infrastructure.persistence.jpa.repositories.UserRepository;
 import com.spotfinder.backend.v1.parkingManagement.domain.model.aggregates.Parking;
 import com.spotfinder.backend.v1.parkingManagement.domain.model.valueobjects.OwnerId;
 import com.spotfinder.backend.v1.parkingManagement.infrastructure.persistence.jpa.repositories.ParkingRepository;
@@ -16,9 +17,11 @@ import java.util.List;
 @Component
 public class AnalyticsExternalParkingService {
     private final ParkingRepository parkingRepository;
+    private final UserRepository userRepository;
 
-    public AnalyticsExternalParkingService(ParkingRepository parkingRepository) {
+    public AnalyticsExternalParkingService(ParkingRepository parkingRepository, UserRepository userRepository) {
         this.parkingRepository = parkingRepository;
+        this.userRepository = userRepository;
     }
 
     public List<Parking> findAll() { 
@@ -33,19 +36,29 @@ public class AnalyticsExternalParkingService {
         }
         
         try {
-            // Obtener el userId como String y eliminar cualquier caracter no numérico
-            String originalName = auth.getName();
-            String userIdStr = originalName.replaceAll("[^0-9]", "");
-            
-            System.out.println("📝 [AnalyticsParkingService] Original auth.getName(): " + originalName);
-            System.out.println("📝 [AnalyticsParkingService] Extracted userId: " + userIdStr);
-            
-            if (userIdStr.isEmpty()) {
-                System.err.println("❌ [AnalyticsParkingService] No numeric userId found in auth.getName()");
-                return List.of();
+            String principalName = auth.getName();
+            Long userId = null;
+
+            System.out.println("📝 [AnalyticsParkingService] Original auth.getName(): " + principalName);
+
+            // Lógica inteligente: ¿Es número o es email?
+            if (principalName.matches("\\d+")) {
+                // Si son solo números (ej: "19"), lo usamos directo
+                userId = Long.parseLong(principalName);
+                System.out.println("✅ [AnalyticsParkingService] Using numeric userId directly: " + userId);
+            } else {
+                // Si es email, buscamos el usuario en la BD para sacar su ID
+                var userOptional = userRepository.findByEmail(principalName);
+
+                if (userOptional.isPresent()) {
+                    userId = userOptional.get().getId();
+                    System.out.println("✅ [AnalyticsParkingService] User found by email. ID: " + userId);
+                } else {
+                    System.err.println("❌ [AnalyticsParkingService] User not found with email: " + principalName);
+                    return List.of();
+                }
             }
             
-            Long userId = Long.parseLong(userIdStr);
             var ownerId = new com.spotfinder.backend.v1.parkingManagement.domain.model.valueobjects.OwnerId(userId);
             
             System.out.println("🔎 [AnalyticsParkingService] Searching parkings for userId: " + userId);
@@ -73,7 +86,21 @@ public class AnalyticsExternalParkingService {
         if (auth == null) return List.of();
         
         try {
-            Long userId = Long.parseLong(auth.getName());
+            String principalName = auth.getName();
+            Long userId = null;
+
+            // Lógica inteligente: ¿Es número o es email?
+            if (principalName.matches("\\d+")) {
+                userId = Long.parseLong(principalName);
+            } else {
+                var userOptional = userRepository.findByEmail(principalName);
+                if (userOptional.isPresent()) {
+                    userId = userOptional.get().getId();
+                } else {
+                    return List.of();
+                }
+            }
+
             var ownerId = new com.spotfinder.backend.v1.parkingManagement.domain.model.valueobjects.OwnerId(userId);
             
             // Obtener el parking y verificar que pertenezca al usuario actual
