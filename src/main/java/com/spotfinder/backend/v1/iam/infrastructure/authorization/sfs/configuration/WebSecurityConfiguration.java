@@ -116,13 +116,7 @@ public class WebSecurityConfiguration {
                                 "/webjars/**",
                                 "/").permitAll()
 
-                        // 2. Endpoints IoT Específicos (Telemetría Edge y Asignación Front)
-                        .requestMatchers(
-                                "/api/spots/sync-telemetry",
-                                "/api/v1/spots/sync-telemetry",
-                                "/api/parkings/*/spots/*/assign-iot",
-                                "/api/v1/parkings/*/spots/*/assign-iot"
-                        ).permitAll()
+                        
 
                         .anyRequest().authenticated());
 
