@@ -17,4 +17,8 @@ public interface ParkingCommandService {
     Optional<String> handle(UpdateAvailableParkingSpotCountCommand command);
 
     Optional<String> handle(UpdateParkingRatingCommand command);
+
+    Optional<ParkingSpot> handle(AssignIotSensorCommand command);
+
+    Optional<ParkingSpot> handle(UpdateSpotByTelemetryCommand command);
 }

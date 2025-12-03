@@ -8,6 +8,7 @@ import com.spotfinder.backend.v1.parkingManagement.domain.model.commands.*;
 import com.spotfinder.backend.v1.parkingManagement.domain.model.entities.ParkingSpot;
 import com.spotfinder.backend.v1.parkingManagement.domain.services.ParkingCommandService;
 import com.spotfinder.backend.v1.parkingManagement.infrastructure.persistence.jpa.repositories.ParkingRepository;
+import com.spotfinder.backend.v1.parkingManagement.infrastructure.persistence.jpa.repositories.ParkingSpotRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -16,11 +17,16 @@ import java.util.Optional;
 public class ParkingCommandServiceImpl implements ParkingCommandService {
 
     private final ParkingRepository parkingRepository;
+    private final ParkingSpotRepository parkingSpotRepository;
     private final EdgeServerRepository edgeServerRepository;
     private final ExternalDeviceService externalDeviceService;
 
-    public ParkingCommandServiceImpl(ParkingRepository parkingRepository, EdgeServerRepository edgeServerRepository, ExternalDeviceService externalDeviceService) {
+    public ParkingCommandServiceImpl(ParkingRepository parkingRepository,
+                                    ParkingSpotRepository parkingSpotRepository,
+                                    EdgeServerRepository edgeServerRepository,
+                                    ExternalDeviceService externalDeviceService) {
         this.parkingRepository = parkingRepository;
+        this.parkingSpotRepository = parkingSpotRepository;
         this.edgeServerRepository = edgeServerRepository;
         this.externalDeviceService = externalDeviceService;
     }
@@ -95,5 +101,32 @@ public class ParkingCommandServiceImpl implements ParkingCommandService {
         var updatedParking = parkingRepository.save(parking);
 
         return Optional.of("Parking rating updated to " + updatedParking.getRating());
+    }
+
+    @Override
+    public Optional<ParkingSpot> handle(AssignIotSensorCommand command) {
+        // Validate that the sensor serial number is not already assigned
+        if (parkingSpotRepository.existsBySensorSerialNumber(command.sensorSerialNumber())) {
+            throw new IllegalArgumentException("Sensor serial number " + command.sensorSerialNumber() + " is already assigned to another spot");
+        }
+
+        var parkingSpot = parkingSpotRepository.findById(command.spotId())
+                .orElseThrow(() -> new IllegalArgumentException("Parking spot not found with ID: " + command.spotId()));
+
+        parkingSpot.assignIotSensor(command.sensorSerialNumber());
+
+        var updatedSpot = parkingSpotRepository.save(parkingSpot);
+        return Optional.of(updatedSpot);
+    }
+
+    @Override
+    public Optional<ParkingSpot> handle(UpdateSpotByTelemetryCommand command) {
+        var parkingSpot = parkingSpotRepository.findBySensorSerialNumber(command.sensorSerialNumber())
+                .orElseThrow(() -> new IllegalArgumentException("Parking spot not found with sensor serial number: " + command.sensorSerialNumber()));
+
+        parkingSpot.updateByTelemetry(command.occupied());
+
+        var updatedSpot = parkingSpotRepository.save(parkingSpot);
+        return Optional.of(updatedSpot);
     }
 }

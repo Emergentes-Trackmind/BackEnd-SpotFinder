@@ -203,6 +203,30 @@ public class Parking extends AuditableAbstractAggregateRoot<Parking> {
         return website;
     }
 
+    public String getLocationJson() {
+        return locationJson;
+    }
+
+    public void setLocationJson(String locationJson) {
+        this.locationJson = locationJson;
+    }
+
+    public String getPricingJson() {
+        return pricingJson;
+    }
+
+    public void setPricingJson(String pricingJson) {
+        this.pricingJson = pricingJson;
+    }
+
+    public String getFeaturesJson() {
+        return featuresJson;
+    }
+
+    public void setFeaturesJson(String featuresJson) {
+        this.featuresJson = featuresJson;
+    }
+
     public Float getRatePerHour() {
         return ratePerHour;
     }

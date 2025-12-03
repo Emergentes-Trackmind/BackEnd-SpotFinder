@@ -2,11 +2,15 @@ package com.spotfinder.backend.v1.parkingManagement.domain.model.entities;
 
 import com.spotfinder.backend.v1.parkingManagement.domain.model.aggregates.Parking;
 import com.spotfinder.backend.v1.parkingManagement.domain.model.valueobjects.ParkingSpotStatus;
+import com.spotfinder.backend.v1.parkingManagement.domain.model.valueobjects.ParkingSpotIotStatus;
 import com.spotfinder.backend.v1.shared.domain.model.entities.AuditableModel;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Column;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
@@ -35,7 +39,17 @@ public class ParkingSpot extends AuditableModel {
     private String label;
 
     @Setter
+    @Enumerated(EnumType.STRING)
     private ParkingSpotStatus status;
+
+    @Setter
+    @Enumerated(EnumType.STRING)
+    @Column(name = "iot_status")
+    private ParkingSpotIotStatus iotStatus;
+
+    @Setter
+    @Column(name = "sensor_serial_number", unique = true)
+    private String sensorSerialNumber;
 
     protected ParkingSpot() {
         this.id = null;
@@ -48,6 +62,8 @@ public class ParkingSpot extends AuditableModel {
         this.columnIndex = column;
         this.label = label;
         this.status = ParkingSpotStatus.AVAILABLE;
+        this.iotStatus = ParkingSpotIotStatus.OFFLINE;
+        this.sensorSerialNumber = null;
     }
 
     // Explicit getId() method to ensure it's available
@@ -79,5 +95,23 @@ public class ParkingSpot extends AuditableModel {
 
     public String getStatus() {
         return this.status.name();
+    }
+
+    public ParkingSpotIotStatus getIotStatus() {
+        return this.iotStatus;
+    }
+
+    public String getSensorSerialNumber() {
+        return this.sensorSerialNumber;
+    }
+
+    public void assignIotSensor(String serialNumber) {
+        this.sensorSerialNumber = serialNumber;
+        this.iotStatus = ParkingSpotIotStatus.OFFLINE;
+    }
+
+    public void updateByTelemetry(boolean occupied) {
+        this.status = occupied ? ParkingSpotStatus.OCCUPIED : ParkingSpotStatus.AVAILABLE;
+        this.iotStatus = ParkingSpotIotStatus.CONNECTED;
     }
 }

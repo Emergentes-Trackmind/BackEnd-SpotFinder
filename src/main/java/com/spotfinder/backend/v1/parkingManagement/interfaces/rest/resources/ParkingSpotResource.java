@@ -8,6 +8,8 @@ public record ParkingSpotResource(
         Integer rowIndex,
         Integer columnIndex,
         String label,
-        String status
+        String status,
+        String iotStatus,
+        String sensorSerialNumber
 ) {
 }

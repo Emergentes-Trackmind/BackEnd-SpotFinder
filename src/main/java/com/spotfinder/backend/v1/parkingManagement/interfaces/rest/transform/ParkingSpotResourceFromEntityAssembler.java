@@ -11,7 +11,9 @@ public class ParkingSpotResourceFromEntityAssembler {
                 entity.getRowIndex(),
                 entity.getColumnIndex(),
                 entity.getLabel(),
-                entity.getStatus()
+                entity.getStatus(),
+                entity.getIotStatus() != null ? entity.getIotStatus().name() : null,
+                entity.getSensorSerialNumber()
         );
     }
 }
