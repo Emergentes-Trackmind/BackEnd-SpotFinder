@@ -112,6 +112,7 @@ public class WebSecurityConfiguration {
                                 "/swagger-resources/**",
                                 "/webjars/**",
                                 "/").permitAll()
+                        .requestMatchers("/api/spots/sync-telemetry", "/api/v1/spots/sync-telemetry").permitAll()
                         .anyRequest().authenticated());
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(authorizationRequestFilter(), UsernamePasswordAuthenticationFilter.class);
