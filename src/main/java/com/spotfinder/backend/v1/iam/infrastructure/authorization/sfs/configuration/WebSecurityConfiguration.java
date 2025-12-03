@@ -85,8 +85,8 @@ public class WebSecurityConfiguration {
         http.cors(configurer -> configurer.configurationSource(request  -> {
             var cors = new CorsConfiguration();
             cors.setAllowedOrigins(List.of(
-                "http://localhost:4200",
-                "https://brave-mushroom-0031ada10.3.azurestaticapps.net"
+                    "http://localhost:4200",
+                    "https://brave-mushroom-0031ada10.3.azurestaticapps.net"
             ));
             cors.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
             cors.setAllowedHeaders(List.of("*"));
@@ -95,10 +95,12 @@ public class WebSecurityConfiguration {
             cors.setMaxAge(3600L);
             return cors;
         }));
+
         http.csrf(csrfConfigurer -> csrfConfigurer.disable())
                 .exceptionHandling(exceptionHandling -> exceptionHandling.authenticationEntryPoint(unauthorizedRequestHandler))
-                .sessionManagement( customizer -> customizer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(customizer -> customizer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
+                        // 1. Endpoints públicos generales (Swagger, Auth, etc.)
                         .requestMatchers(
                                 "/api/v1/authentication/**",
                                 "/api/v1/roles/**",
@@ -112,12 +114,20 @@ public class WebSecurityConfiguration {
                                 "/swagger-resources/**",
                                 "/webjars/**",
                                 "/").permitAll()
-                        .requestMatchers("/api/spots/sync-telemetry", "/api/v1/spots/sync-telemetry").permitAll()
+
+                        // 2. Endpoints IoT Específicos (Telemetría Edge y Asignación Front)
+                        .requestMatchers(
+                                "/api/spots/sync-telemetry",
+                                "/api/v1/spots/sync-telemetry",
+                                "/api/parkings/*/spots/*/assign-iot",
+                                "/api/v1/parkings/*/spots/*/assign-iot"
+                        ).permitAll()
+
                         .anyRequest().authenticated());
+
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(authorizationRequestFilter(), UsernamePasswordAuthenticationFilter.class);
         return http.build();
-
     }
 
     /**
