@@ -57,20 +57,28 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
     }
 
     public TotalsKpiDTO getTotals(Long profileId) {
+        System.out.println("📊 [Analytics] getTotals() called with profileId: " + profileId);
+        
         try {
             LocalDateTime from = LocalDateTime.now().minusMonths(1);
             
             // Obtener los parkings según el filtro
+            System.out.println("🔍 [Analytics] Fetching parkings...");
             List<Parking> parkings = getParkings(profileId);
             if (parkings == null) parkings = new ArrayList<>();
+            
+            System.out.println("✅ [Analytics] Parkings obtained: " + parkings.size());
             
             List<Long> parkingIds = parkings.stream()
                     .filter(p -> p.getId() != null)
                     .map(Parking::getId)
                     .collect(Collectors.toList());
 
+            System.out.println("📝 [Analytics] Parking IDs: " + parkingIds);
+
             // Si no hay parkings, devolver valores por defecto
             if (parkingIds.isEmpty()) {
+                System.out.println("⚠️ [Analytics] No parkings found, returning empty DTO");
                 return createEmptyTotalsKpiDTO();
             }
 
@@ -195,6 +203,9 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
         // Retornar el DTO completo
         return new TotalsKpiDTO(revenue, occupancy, users, parkingsKpi);
         } catch (Exception e) {
+            // Logging del error para diagnóstico
+            System.err.println("❌ [Analytics] Error en getTotals(): " + e.getMessage());
+            e.printStackTrace();
             // Si ocurre cualquier error, devolver un DTO vacío para evitar errores en el frontend
             return createEmptyTotalsKpiDTO();
         }

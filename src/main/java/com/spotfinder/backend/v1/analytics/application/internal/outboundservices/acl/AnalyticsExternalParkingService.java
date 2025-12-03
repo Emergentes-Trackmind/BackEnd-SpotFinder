@@ -24,19 +24,43 @@ public class AnalyticsExternalParkingService {
     public List<Parking> findAll() { 
         // Obtener usuario actual del contexto de seguridad
         var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null) return List.of();
+        
+        System.out.println("🔍 [AnalyticsParkingService] Auth: " + (auth != null ? auth.getName() : "null"));
+        
+        if (auth == null) {
+            System.err.println("❌ [AnalyticsParkingService] No authentication found");
+            return List.of();
+        }
         
         try {
             // Obtener el userId como String y eliminar cualquier caracter no numérico
-            String userIdStr = auth.getName().replaceAll("[^0-9]", "");
+            String originalName = auth.getName();
+            String userIdStr = originalName.replaceAll("[^0-9]", "");
+            
+            System.out.println("📝 [AnalyticsParkingService] Original auth.getName(): " + originalName);
+            System.out.println("📝 [AnalyticsParkingService] Extracted userId: " + userIdStr);
+            
             if (userIdStr.isEmpty()) {
+                System.err.println("❌ [AnalyticsParkingService] No numeric userId found in auth.getName()");
                 return List.of();
             }
             
             Long userId = Long.parseLong(userIdStr);
             var ownerId = new com.spotfinder.backend.v1.parkingManagement.domain.model.valueobjects.OwnerId(userId);
-            return parkingRepository.findParkingsByOwnerId(ownerId);
+            
+            System.out.println("🔎 [AnalyticsParkingService] Searching parkings for userId: " + userId);
+            
+            List<Parking> parkings = parkingRepository.findParkingsByOwnerId(ownerId);
+            
+            System.out.println("✅ [AnalyticsParkingService] Found " + parkings.size() + " parkings");
+            
+            return parkings;
         } catch (NumberFormatException e) {
+            System.err.println("❌ [AnalyticsParkingService] NumberFormatException: " + e.getMessage());
+            return List.of();
+        } catch (Exception e) {
+            System.err.println("❌ [AnalyticsParkingService] Unexpected error: " + e.getMessage());
+            e.printStackTrace();
             return List.of();
         }
     }
